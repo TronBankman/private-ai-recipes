@@ -1,56 +1,77 @@
 # Private-AI Recipes
 
-Copy-paste setups for pointing open-source AI tools at **OpenImpact**'s
-OpenAI- and Anthropic-compatible API, with every request sealed inside a
-hardware enclave the provider can't read.
+**Use AI on data you can't send to a normal AI provider** — clinic notes,
+legal intake, HR files, finance, kids' data — without the model's provider
+being able to read it.
 
-> Why this exists: a lot of teams building on sensitive text — clinic notes,
-> legal intake, HR, finance, kids' data — can't send their data to a normal AI
-> provider because the provider could read it. OpenImpact's **Private** tier
-> runs a request inside a hardware enclave (a TEE), and the model's provider
-> cannot read the conversation. If a request can't be sealed, it's refused. This
-> works with the standard OpenAI and Anthropic request shapes, so for most tools
-> it's a base-URL change plus one extra field.
+OpenImpact runs each request inside a **hardware enclave** (a TEE) that the
+model's provider can't see into. If a request can't be sealed, it's refused
+rather than sent another way. It speaks the standard OpenAI and Anthropic
+formats, so for most tools switching is a base-URL change and one setting.
 
-## What you need
+This repo has copy-paste setups for 15 tools, plus a 10-second check script.
 
-- An OpenImpact workspace and API key. Start with **$5 of free credit, no card**:
-  https://business.oimpact.ai/?ref=gh-private-ai-recipes
-- A model that runs sealed. `glm-5.3` is the general-purpose one. Run
-  `GET /v1/models` to see the current list; models whose `trust_tiers` includes
-  `tee` can be sealed.
+## Start in 3 steps
 
-## How sealing is requested
+**1. Get a key** — $5 of free credit, no card:
+https://business.oimpact.ai/?ref=gh-private-ai-recipes
+(Developers → API keys → Create key)
 
-On every request, send **`trust_tier: "tee"`** (OpenAI shape) or set
-**`trust_mode: "private"`**. You can confirm it worked from the response header
-`x-openimpact-trust-tier: tee`. If you instead set your whole workspace to
-Private in Settings, every call on your API keys is sealed automatically — but
-sending the field on the request is the belt-and-braces version and is what the
-recipes below do.
+**2. Check it works and is sealed:**
+
+```bash
+export OPENIMPACT_API_KEY="<YOUR_KEY>"
+curl -sO https://raw.githubusercontent.com/TronBankman/private-ai-recipes/main/verify.sh
+bash verify.sh
+```
+
+You should see:
+
+```
+     ✓ key works
+     ✓ sealed: x-openimpact-trust-tier: tee
+PASS — your key works and your requests run inside a hardware enclave ...
+```
+
+**3. Pick your tool below** and copy its setup.
 
 ## Recipes
 
-| Tool | Recipe | Shape |
-|------|--------|-------|
-| curl | [recipes/curl.md](recipes/curl.md) | OpenAI |
-| OpenAI Python SDK | [recipes/openai-python.md](recipes/openai-python.md) | OpenAI |
-| Anthropic Python SDK | [recipes/anthropic-python.md](recipes/anthropic-python.md) | Anthropic |
-| Node (fetch / openai SDK) | [recipes/node.md](recipes/node.md) | OpenAI |
-| Claude Code | [recipes/claude-code.md](recipes/claude-code.md) | Anthropic |
-| LiteLLM | [recipes/litellm.md](recipes/litellm.md) | OpenAI |
-| OpenCode | [recipes/opencode.md](recipes/opencode.md) | OpenAI |
-| Cherry Studio | [recipes/cherry-studio.md](recipes/cherry-studio.md) | OpenAI |
-| Jan | [recipes/jan.md](recipes/jan.md) | OpenAI |
-| Continue | [recipes/continue.md](recipes/continue.md) | OpenAI |
-| Cline | [recipes/cline.md](recipes/cline.md) | OpenAI |
-| LibreChat | [recipes/librechat.md](recipes/librechat.md) | OpenAI |
-| Open WebUI | [recipes/open-webui.md](recipes/open-webui.md) | OpenAI |
+| Tool | Setup | Status |
+|------|-------|--------|
+| curl | [recipes/curl.md](recipes/curl.md) | ✅ Tested live |
+| OpenAI Python SDK | [recipes/openai-python.md](recipes/openai-python.md) | ✅ Tested live |
+| Anthropic Python SDK | [recipes/anthropic-python.md](recipes/anthropic-python.md) | ✅ Tested live |
+| Node (`openai` SDK / fetch) | [recipes/node.md](recipes/node.md) | ✅ Tested live |
+| LiteLLM | [recipes/litellm.md](recipes/litellm.md) | ✅ Tested live |
+| OpenCode | [recipes/opencode.md](recipes/opencode.md) | ✅ Tested live in OpenCode |
+| Aider | [recipes/aider.md](recipes/aider.md) | ✅ Aider's request tested live |
+| Continue | [recipes/continue.md](recipes/continue.md) | 📄 Setup checked, not run yet |
+| Cline | [recipes/cline.md](recipes/cline.md) | 📄 Setup checked, not run yet |
+| Cursor | [recipes/cursor.md](recipes/cursor.md) | 📄 Not run yet — read the note on Cursor's servers |
+| Cherry Studio | [recipes/cherry-studio.md](recipes/cherry-studio.md) | 📄 Setup checked, not run yet |
+| Jan | [recipes/jan.md](recipes/jan.md) | 📄 Setup checked, not run yet |
+| LibreChat | [recipes/librechat.md](recipes/librechat.md) | 📄 Setup checked, not run yet |
+| Open WebUI | [recipes/open-webui.md](recipes/open-webui.md) | 📄 Setup checked, not run yet |
+| Claude Code | [recipes/claude-code.md](recipes/claude-code.md) | ⚠️ Not working yet — use OpenCode or Aider for now |
 
-Each recipe was run live against `api.oimpact.ai` with a real key read from the
-environment, and the `x-openimpact-trust-tier: tee` header confirmed, before it
-was added here. The key is never written into any file in this repo — every
-recipe uses `$OPENIMPACT_API_KEY` or `<YOUR_KEY>`.
+**✅ Tested live** means the setup was run against `api.oimpact.ai` with a real
+key and came back sealed (`x-openimpact-trust-tier: tee`). **📄 Setup checked**
+means it follows the tool's own docs and source but hasn't been run end-to-end
+yet. Tried one? Open an issue with what happened and we'll update the table.
+
+## How sealing works
+
+- **Easiest:** set your workspace to **Private** in Settings → Privacy level on
+  business.oimpact.ai. Every call on your API keys is then sealed, whatever tool
+  you use.
+- **Per request:** send `"trust_tier": "tee"` in the request body. The recipes
+  show where each tool lets you add it.
+- **Proof:** every sealed response carries the header
+  `x-openimpact-trust-tier: tee`.
+
+Sealed models today include `glm-5.3` (general purpose). For the current list,
+call `GET /v1/models` — models whose `trust_tiers` include `tee` can be sealed.
 
 ## Pricing (public)
 
@@ -58,12 +79,17 @@ recipe uses `$OPENIMPACT_API_KEY` or `<YOUR_KEY>`.
 - **Solo**: $30/month for one agent, $15/month for each extra agent.
 - **Business**: $150/month with 20 agents included.
 - You're billed what the model provider actually charged, plus OpenImpact's
-  markup. Sealed (`tee`) requests cost more than verified-tier requests because
-  the enclave is real hardware.
+  markup. Sealed requests cost more than standard ones because the enclave is
+  real hardware.
+
+## Your key stays yours
+
+No file in this repo contains a key. Every recipe reads it from
+`$OPENIMPACT_API_KEY` or shows `<YOUR_KEY>`, and `verify.sh` never prints it.
 
 ## Disclosure
 
 This repo is maintained by OpenImpact's AI agent on behalf of the OpenImpact
-team. Everything in it is
-a setup guide using only public facts from https://business.oimpact.ai and the
-public API. If a recipe is wrong or a tool has changed, open an issue or PR.
+team. Everything in it uses only public facts from https://business.oimpact.ai
+and the public API. If a recipe is wrong or a tool has changed, open an issue
+or PR.
