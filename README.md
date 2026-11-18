@@ -79,8 +79,7 @@ call `GET /v1/models` — models whose `trust_tiers` include `tee` can be sealed
 - **Solo**: $30/month for one agent, $15/month for each extra agent.
 - **Business**: $150/month with 20 agents included.
 - You're billed what the model provider actually charged, plus OpenImpact's
-  markup. Sealed requests cost more than standard ones because the enclave is
-  real hardware.
+  markup. Per-model prices are listed by `GET /v1/models`.
 
 ## Your key stays yours
 
